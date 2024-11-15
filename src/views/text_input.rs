@@ -110,6 +110,7 @@ pub struct TextInput {
     is_focused: bool,
     last_pointer_down: Point,
     last_cursor_action_on: Instant,
+    dead_key: Option<char>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -166,6 +167,7 @@ pub fn text_input(buffer: RwSignal<String>) -> TextInput {
         is_focused: false,
         last_pointer_down: Point::ZERO,
         last_cursor_action_on: Instant::now(),
+        dead_key: None,
     }
     .keyboard_navigable()
     .on_event_stop(EventListener::FocusGained, move |_| {
@@ -685,8 +687,14 @@ impl TextInput {
                     self.cursor_glyph_idx = selection.start;
                     self.selection = None;
                 } else {
-                    self.buffer
-                        .update(|buf| buf.insert(self.cursor_glyph_idx, ' '));
+                    if let Some(dead_key) = self.dead_key {
+                        self.dead_key = None;
+                        self.buffer
+                            .update(|buf| buf.insert(self.cursor_glyph_idx, dead_key));
+                    } else {
+                        self.buffer
+                            .update(|buf| buf.insert(self.cursor_glyph_idx, ' '));
+                    }
                 }
                 self.move_cursor(Movement::Glyph, Direction::Right)
             }
@@ -826,6 +834,8 @@ impl TextInput {
 
         match event.key.logical_key {
             Key::Character(ref ch) => {
+                self.dead_key = None;
+
                 let handled_modifier_cmd = self.handle_modifier_cmd(event, ch);
                 if handled_modifier_cmd {
                     return true;
@@ -835,6 +845,10 @@ impl TextInput {
                     return false;
                 }
                 self.insert_text(ch)
+            }
+            Key::Dead(k) => {
+                self.dead_key = k;
+                true
             }
             _ => false,
         }
