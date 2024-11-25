@@ -160,6 +160,7 @@ pub struct Editor {
     pub(crate) style: RwSignal<Rc<dyn Styling>>,
 
     pub cursor: RwSignal<Cursor>,
+    pub dead_key: RwSignal<Option<char>>,
 
     pub window_origin: RwSignal<Point>,
     pub viewport: RwSignal<Rect>,
@@ -253,6 +254,8 @@ impl Editor {
         let cursor = Cursor::new(cursor_mode, None, None);
         let cursor = cx.create_rw_signal(cursor);
 
+        let dead_key = cx.create_rw_signal(None);
+
         let doc = cx.create_rw_signal(doc);
         let style = cx.create_rw_signal(style);
 
@@ -275,6 +278,7 @@ impl Editor {
             doc,
             style,
             cursor,
+            dead_key,
             window_origin: cx.create_rw_signal(Point::ZERO),
             viewport,
             parent_size: cx.create_rw_signal(Rect::ZERO),

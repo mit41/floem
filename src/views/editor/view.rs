@@ -1178,15 +1178,29 @@ fn editor_content(
                 mods.set(Modifiers::ALT, false);
 
                 if mods.is_empty() {
-                    if let KeyInput::Keyboard(Key::Character(c), _) = keypress.key {
-                        editor.get_untracked().receive_char(&c);
-                    } else if let KeyInput::Keyboard(Key::Named(NamedKey::Space), _) = keypress.key
-                    {
-                        editor.get_untracked().receive_char(" ");
-                    } else if let KeyInput::Keyboard(Key::Unidentified(_), _) = keypress.key {
-                        if let Some(text) = key_text {
-                            editor.get_untracked().receive_char(&text);
+                    match keypress.key {
+                        KeyInput::Keyboard(Key::Character(c), _) => {
+                            editor.get_untracked().receive_char(&c);
+                            editor.get_untracked().dead_key.update(|v| *v = None);
                         }
+                        KeyInput::Keyboard(Key::Dead(dead_key), _) => {
+                            editor.get_untracked().dead_key.update(|v| *v = dead_key);
+                        }
+                        KeyInput::Keyboard(Key::Named(NamedKey::Space), _) => {
+                            if let Some(dead_key) = editor.get_untracked().dead_key.get_untracked()
+                            {
+                                editor.get_untracked().receive_char(&dead_key.to_string());
+                                editor.get_untracked().dead_key.update(|v| *v = None);
+                            } else {
+                                editor.get_untracked().receive_char(" ");
+                            }
+                        }
+                        KeyInput::Keyboard(Key::Unidentified(_), _) => {
+                            if let Some(text) = key_text {
+                                editor.get_untracked().receive_char(&text);
+                            }
+                        }
+                        _ => {}
                     }
                 }
             })
