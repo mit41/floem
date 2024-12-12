@@ -234,7 +234,9 @@ impl ApplicationHandle {
             WindowEvent::MouseInput { state, button, .. } => {
                 window_handle.mouse_input(button, state);
             }
-            WindowEvent::TouchpadMagnify { .. } => {}
+            WindowEvent::TouchpadMagnify { delta, phase, .. } => {
+                window_handle.touchpad_magnify(delta, phase);
+            }
             WindowEvent::SmartMagnify { .. } => {}
             WindowEvent::TouchpadRotate { .. } => {}
             WindowEvent::TouchpadPressure { .. } => {}
@@ -301,6 +303,7 @@ impl ApplicationHandle {
         let logical_size = size.map(|size| LogicalSize::new(size.width, size.height));
 
         let mut window_builder = floem_winit::window::WindowBuilder::new()
+            .with_visible(false)
             .with_title(title)
             .with_decorations(!undecorated)
             .with_transparent(transparent)
